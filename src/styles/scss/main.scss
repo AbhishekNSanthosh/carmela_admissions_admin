@@ -1,0 +1,19 @@
+@import "custom/variables";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  padding: 0;
+  margin: 0;
+  font-family: $font-family;
+  background-color: #F9FAFB;
+}
+
+@media (max-width: 640px) {
+  * {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+}

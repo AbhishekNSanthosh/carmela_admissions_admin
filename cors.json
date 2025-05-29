@@ -1,0 +1,13 @@
+[
+  {
+    "origin": [
+      "https://admissions.carmelpoly.in",
+      "http://localhost:3000",
+      "https://admissions-portal.vercel.app/",
+      "https://*.carmelpoly.in"
+    ],
+    "method": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    "responseHeader": ["Content-Type", "x-goog-meta-*", "Authorization"],
+    "maxAgeSeconds": 3600
+  }
+]
