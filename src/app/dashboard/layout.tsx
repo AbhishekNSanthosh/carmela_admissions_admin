@@ -1,6 +1,6 @@
 "use client";
-import Sidebar from "@widgets/(student)/Sidebar";
-import Topbar from "@widgets/(student)/Topbar";
+import Sidebar from "@widgets/(admin)/Sidebar";
+import Topbar from "@widgets/(admin)/Topbar";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { app } from "@lib/firebase"; // adjust if your firebase path is different
 import { useEffect, useState } from "react";

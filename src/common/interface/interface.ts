@@ -35,6 +35,9 @@ export interface Marks {
 
 
 export interface Application {
+    appId?:string;
+    reason?:string;
+    percentage?:number;
     indexScore?:number;
     id?: string;
     category: string;

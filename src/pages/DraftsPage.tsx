@@ -1,4 +1,4 @@
-import Drafts from "@widgets/(student)/Drafts";
+import Drafts from "@widgets/(admin)/Drafts";
 import React from "react";
 
 export default function DraftsPage() {

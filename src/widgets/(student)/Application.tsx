@@ -1,195 +1,194 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { collection, getDocs } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
+import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@lib/firebase";
-import { Application } from "../../common/interface/interface";
+import Link from "next/link";
+import { MdFileDownload } from "react-icons/md";
+import { FaRegEye } from "react-icons/fa";
+import { useRouter } from "next/navigation";
+import { MdOutlineAddCircleOutline } from "react-icons/md";
 
-export default function ApplicationRanking() {
-  const [applicationsWithScore, setApplicationsWithScore] = useState<
-    (Application & { indexScore?: number })[]
-  >([]);
-  const [currentTab, setCurrentTabs] = useState("management_merit_regular");
+export default function Application() {
+  const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const getPointFromMark = (mark: string): number => {
-    const gradeMap: Record<string, number> = {
-      "A+": 9,
-      A1: 9,
-      A: 8,
-      A2: 8,
-      "B+": 7,
-      B1: 7,
-      B: 6,
-      B2: 6,
-      "C+": 5,
-      C1: 5,
-      C: 4,
-      C2: 4,
-      "D+": 3,
-      D1: 3,
-      D: 2,
-      D2: 2,
-      E: 1,
-      E1: 1,
-    };
-
-    if (gradeMap[mark]) {
-      return gradeMap[mark];
-    }
-
-    const num = parseFloat(mark);
-    if (!isNaN(num)) {
-      if (num >= 90) return 9;
-      if (num >= 80) return 8;
-      if (num >= 70) return 7;
-      if (num >= 60) return 6;
-      if (num >= 50) return 5;
-      if (num >= 40) return 4;
-      if (num >= 30) return 3;
-      if (num >= 20) return 2;
-      return 1;
-    }
-
-    return 0;
-  };
-
+  const [showModal, setShowModal] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const router = useRouter();
   useEffect(() => {
-    const fetchApplications = async () => {
-      try {
-        setLoading(true);
-        const querySnapshot = await getDocs(
-          collection(db, "admission_application")
+    const auth = getAuth();
+    const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
+      setUser(currentUser);
+
+      if (currentUser?.email) {
+        const q = query(
+          collection(db, "admission_application"),
+          where("email", "==", currentUser.email)
         );
-        const rawApps: Application[] = querySnapshot.docs.map((doc) => ({
-          ...(doc.data() as Application),
+
+        const snapshot = await getDocs(q);
+        const applicationData = snapshot.docs.map((doc) => ({
+          appId: doc.id,
+          ...doc.data(),
         }));
 
-        const coreSubjects = [
-          "mathematics",
-          "physics",
-          "chemistry",
-          "science",
-          "english",
-        ];
-
-        const withIndexScores = rawApps.map((app) => {
-          const marks = app.marks || {};
-          const corePoints: number[] = [];
-          const otherPoints: number[] = [];
-
-          for (const [subject, mark] of Object.entries(marks)) {
-            const point = getPointFromMark(mark);
-            const sanitized = subject.trim().toLocaleLowerCase();
-            if (coreSubjects.includes(sanitized)) {
-              corePoints.push(point);
-            } else {
-              otherPoints.push(point);
-            }
-          }
-
-          const coreAvg =
-            corePoints.length > 0
-              ? (corePoints.reduce((a, b) => a + b, 0) / corePoints.length) *
-                0.85
-              : 0;
-
-          const otherAvg =
-            otherPoints.length > 0
-              ? (otherPoints.reduce((a, b) => a + b, 0) / otherPoints.length) *
-                0.15
-              : 0;
-
-          const indexScore = coreAvg + otherAvg;
-
-          return {
-            ...app,
-            indexScore,
-          };
-        });
-
-        setApplicationsWithScore(withIndexScores);
-      } catch (error) {
-        console.error("Error fetching applications:", error);
-      } finally {
+        setApplications(applicationData);
         setLoading(false);
       }
-    };
+    });
 
-    fetchApplications();
+    return () => unsubscribe();
   }, []);
 
-  const getFullName = (app: Application) => `${app.firstName} ${app.lastName}`;
+  const handleView = (id: string) => {
+    router.push("/dashboard/applciations/" + id);
+  };
 
-  const tabs = [
-    {
-      title: "Management Merit - Regular",
-      category: "management_merit_regular",
-    },
-    {
-      title: "Management Quota - Regular",
-      category: "management_quota_regular",
-    },
-    {
-      title: "Management Merit - Lateral Entry",
-      category: "management_merit_lateral_entry",
-    },
-    {
-      title: "Management Quota - Lateral Entry",
-      category: "management_quota_lateral_entry",
-    },
-  ];
+  const handleDownload = (app: any) => {
+    const blob = new Blob([JSON.stringify(app, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${app.generatedId || app.id}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleCreateNew = () => {
+    setShowModal(true);
+  };
+
+  const handleOptionSelect = (option: string) => {
+    setShowModal(false);
+    router.push(`/`);
+  };
+
+  console.log(showModal);
+
+  if (loading) return <div className="p-4">Loading applications...</div>;
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Applications</h1>
-
-      <div className="flex border-b border-gray-300 gap-2 flex-wrap">
-        {tabs.map((tab, index) => (
-          <div
-            key={index}
-            onClick={() => setCurrentTabs(tab.category)}
-            className={`px-4 py-2 cursor-pointer font-medium border-b-2 rounded-t-md
-              ${
-                currentTab === tab.category
-                  ? "border-transparent text-white bg-primary-600"
-                  : "border-blue-500 text-blue-600 bg-white"
-              }`}
+    <div className="flex flex-col relative p-2">
+      <div className="flex justify-between items-center md:mb-6">
+        <h1 className="md:text-2xl text-lg font-semibold">Your Applications</h1>
+        <div className="flex space-x-4">
+          {/* <Link href="/dashboard/drafts">
+            <button className="bg-primary-600 hidden md:flex text-white px-4 py-2 rounded-md hover:bg-blue-700">
+              View Drafts
+            </button>
+          </Link> */}
+          <button
+            onClick={handleCreateNew}
+            className="bg-green-600 hidden md:flex text-white px-4 py-2 rounded-md hover:bg-green-700"
           >
-            {tab.title}
-          </div>
-        ))}
+            New Application
+          </button>
+          <button
+            onClick={handleCreateNew}
+            className="text-xl text-green-500 flex md:hidden px-4 py-2"
+          >
+            <MdOutlineAddCircleOutline className="text-4xl" />
+          </button>
+        </div>
       </div>
 
-      <div className="mt-6">
-        {loading ? (
-          <p>Loading...</p>
-        ) : (
-          <ul className="space-y-2">
-            {applicationsWithScore
-              .filter((app) => app.category === currentTab)
-              .sort((a, b) => (b.indexScore ?? 0) - (a.indexScore ?? 0))
-              .map((app, idx) => (
-                <li
-                  key={idx}
-                  className="p-3 border rounded bg-gray-50 text-sm shadow-sm"
+      {applications.length === 0 ? (
+        <p>No applications found.</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          {applications.map((app, index) => (
+            <div
+              // href={"/dashboard/application/" + app.id}
+              key={`${app?.id ?? "no-id"}-${index}-${
+                app?.firstName ?? "no-name"
+              }`}
+              className="p-4 bg-white border rounded shadow-sm"
+            >
+              {/* <div className="">
+                <p className="text-xs italic">Application Id: {app.appId}</p>
+              </div> */}
+              <p>
+                <strong>Name:</strong> {app?.firstName} {app?.lastName}
+              </p>
+              <p>
+                <strong>Email:</strong> {app?.email}
+              </p>
+              <p>
+                <strong>Category:</strong> {app?.title}
+              </p>
+              <p>
+                <strong>Application No:</strong> {app?.generatedId || "—"}
+              </p>
+
+              <div className="mt-4 flex gap-2">
+                {/* <button
+                  className="bg-primary-600 flex items-center justify-center gap-2 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm"
+                  onClick={() => handleView(app.appId)}
                 >
-                  <strong>
-                    #{idx + 1}. {getFullName(app)}
-                  </strong>
-                  <div>Course: {app.course}</div>
-                  <div>Email: {app.email}</div>
-                  <div>
-                    Index Score:{" "}
-                    <span className="font-medium">
-                      {app.indexScore ?? "N/A"}
-                    </span>
-                  </div>
-                </li>
-              ))}
-          </ul>
-        )}
-      </div>
+                  <FaRegEye className="text-[19px]" />
+                  View
+                </button> */}
+                <Link
+                  href={`/dashboard/application/download/${app?.appId}`}
+                  className="bg-primary-50 text-primary-700 font-semibold flex items-center justify-center gap-2 px-3 py-1 rounded hover:bg-gray-800 text-sm"
+                  // onClick={() => {
+                  //   router.push("/dashboard/application/download/" + app?.id);
+                  // }}
+                >
+                  <MdFileDownload className="text-[19px]" />
+                  Download
+                </Link>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {showModal && (
+        <div className="fixed md:w-[86vw] w-[95vw] h-[89vh] backdrop-blur-md bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-[95vw] md:w-[25vw]">
+            <h2 className="text-lg font-semibold mb-4 text-center">
+              Select Admission Type
+            </h2>
+            <div className="flex flex-col space-y-5">
+              <div className="flex flex-col space-y-3">
+                <Link
+                  href={"/dashboard/application/management/lateral-entry"}
+                  className="px-4 py-3 bg-primary-600 text-white rounded hover:bg-blue-700"
+                >
+                  Management Quota - Lateral Entry
+                </Link>
+                <Link
+                  href={"/dashboard/application/management/merit-lateral-entry"}
+                  className="px-4 py-3 bg-primary-600 text-white rounded hover:bg-blue-700"
+                >
+                  Management Merit - Lateral Entry
+                </Link>
+                <Link
+                  href={"/dashboard/application/management/regular"}
+                  className="px-4 py-3 bg-primary-600 text-white rounded hover:bg-blue-700"
+                >
+                  Management Quota - Regular
+                </Link>
+                <Link
+                  href={"/dashboard/application/management/merit-regular"}
+                  className="px-4 py-3 bg-primary-600 text-white rounded hover:bg-blue-700"
+                >
+                  Management Merit - Regular
+                </Link>
+              </div>
+              <button
+                onClick={() => setShowModal(false)}
+                className="mt-[15px] text-sm text-red-500 hover:underline"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

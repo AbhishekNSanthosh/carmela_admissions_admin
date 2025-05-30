@@ -18,7 +18,7 @@ export default function Topbar({ user }: { user: any }) {
   const location = usePathname();
   const router = useRouter();
   const isLoading = user === null;
-  const displayName = user?.displayName || user?.email;
+  const displayName = user?.displayName || "User";
   const photoURL = user?.photoURL;
 
   useEffect(() => {
@@ -58,7 +58,7 @@ export default function Topbar({ user }: { user: any }) {
           {isLoading ? (
             <div className="animate-pulse w-[12rem] h-6 bg-gray-400 rounded-md" />
           ) : (
-            <>{user?.displayName ? `Welcome, ${displayName}👋` : `Welcome👋`}</>
+            `Welcome, ${displayName}👋`
           )}
         </div>
         <div
@@ -98,7 +98,7 @@ export default function Topbar({ user }: { user: any }) {
               />
             </div>
           ) : (
-            <div className="w-[45px] h-[45px] uppercase rounded-full bg-primary-500 flex items-center justify-center text-white font-bold">
+            <div className="w-[45px] h-[45px] rounded-full bg-gray-400 flex items-center justify-center text-white font-bold">
               {displayName.charAt(0)}
             </div>
           )}

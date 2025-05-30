@@ -115,7 +115,6 @@ const styles = StyleSheet.create({
     borderRightColor: "#999",
     flex: 1,
     fontSize: 9,
-   textTransform: "capitalize",
   },
   lastCell: {
     borderRightWidth: 0,
@@ -167,7 +166,7 @@ const ApplicationPDFDocument = ({
         </View>
         <Text style={styles.title}>Carmel Polytechnic College</Text>
         <Text style={styles.subtitle}>
-          Application for Polytechnic Admission 2025-2026
+          Application for Polytechnic Admission 2024-2025
         </Text>
         <Text style={{ marginBottom: 4 }}>{application?.title}</Text>
         <Text style={{ fontSize: 8 }}>
@@ -181,7 +180,7 @@ const ApplicationPDFDocument = ({
       {/* Application Meta */}
       <View style={styles.metaInfo}>
         <Text>Application Number: {application?.generatedId || "Nill"}</Text>
-        {/* <Text>Index Score: 6.7875004</Text> */}
+        <Text>Index Score: 6.7875004</Text>
         <Text>Fees to be remitted: Rs. {application?.fee}/-</Text>
       </View>
 
@@ -208,31 +207,30 @@ const ApplicationPDFDocument = ({
             {application?.preferenceThree || "Nill"}
           </Text>
         </View>
-        {(application?.preferenceFour ||
+        {application?.preferenceFour ||
           application?.preferenceFive ||
-          application?.preferenceSix) && (
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              fontSize: 9,
-              marginTop: 5,
-            }}
-          >
-            <Text>
-              <Text style={styles.boldText}>Preference 4:</Text>{" "}
-              {application?.preferenceFour || "Nill"}
-            </Text>
-            <Text>
-              <Text style={styles.boldText}>Preference 5:</Text>{" "}
-              {application?.preferenceFive || "Nill"}
-            </Text>
-            <Text>
-              <Text style={styles.boldText}>Preference 6:</Text>{" "}
-              {application?.preferenceSix || "Nill"}
-            </Text>
-          </View>
-        )}
+          (application?.preferenceFive && (
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                fontSize: 9,
+              }}
+            >
+              <Text>
+                <Text style={styles.boldText}>Preference 4:</Text>{" "}
+                {application?.preferenceFour || "Nill"}
+              </Text>
+              <Text>
+                <Text style={styles.boldText}>Preference 5:</Text>{" "}
+                {application?.preferenceFive || "Nill"}
+              </Text>
+              <Text>
+                <Text style={styles.boldText}>Preference 6:</Text>{" "}
+                {application?.preferenceSix || "Nill"}
+              </Text>
+            </View>
+          ))}
       </View>
 
       {/* Candidate Profile */}
@@ -315,7 +313,7 @@ const ApplicationPDFDocument = ({
               {application?.universityOrBoard}
             </Text>
             <Text style={[styles.tableCell, styles.lastCell, { flex: 0.6 }]}>
-              {application?.passedOn}
+              2022
             </Text>
           </View>
         </View>
@@ -343,7 +341,7 @@ const ApplicationPDFDocument = ({
             <Text style={[styles.tableCell, { flex: 0.3 }]}>No.</Text>
             <Text style={[styles.tableCell, { flex: 2 }]}>Subject</Text>
             <Text style={[styles.tableCell, styles.lastCell, { flex: 0.4 }]}>
-              Marks/Grade
+              Grade
             </Text>
           </View>
           {/* Table Rows */}
@@ -354,6 +352,7 @@ const ApplicationPDFDocument = ({
                   {index + 1}
                 </Text>
                 <Text style={[styles.tableCell, { flex: 2 }]}>
+                  {" "}
                   {subject.replace(/([A-Z])/g, " $1").trim()}
                 </Text>
                 <Text
@@ -365,20 +364,6 @@ const ApplicationPDFDocument = ({
             )
           )}
         </View>
-        {application?.totalofMaxMarks && (
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              marginBottom: 0,
-              marginTop: 5,
-            }}
-          >
-            <Text style={styles.boldText}>
-              Overall Maximum Marks (Out of) : {application?.totalofMaxMarks}
-            </Text>
-          </View>
-        )}
       </View>
 
       {/* Guardian Info */}
@@ -450,7 +435,7 @@ const ApplicationPDFDocument = ({
           {/* Table Rows */}
           {[
             "I have filled-in the correct information.",
-            `I have uploaded the copy of statement of marks card of class ${application?.course}`,
+            "I have uploaded the copy of statement of marks card of class X.",
             "My parent/guardian and I have signed the declaration on the printed application form.",
             "I am attaching the copy of application processing fee challan.",
           ].map((item, index) => (
