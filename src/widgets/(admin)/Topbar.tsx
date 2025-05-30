@@ -14,11 +14,12 @@ import { getAuth, signOut } from "firebase/auth";
 import easyToast from "@components/CustomToast";
 
 export default function Topbar({ user }: { user: any }) {
+  console.log(user)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const location = usePathname();
   const router = useRouter();
   const isLoading = user === null;
-  const displayName = user?.displayName || "User";
+  const displayName = user?.firstname || "User";
   const photoURL = user?.photoURL;
 
   useEffect(() => {
@@ -98,7 +99,7 @@ export default function Topbar({ user }: { user: any }) {
               />
             </div>
           ) : (
-            <div className="w-[45px] h-[45px] rounded-full bg-gray-400 flex items-center justify-center text-white font-bold">
+            <div className="w-[45px] h-[45px] rounded-full bg-primary-600 flex items-center justify-center text-white font-bold">
               {displayName.charAt(0)}
             </div>
           )}
