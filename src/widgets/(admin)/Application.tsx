@@ -224,25 +224,155 @@ export default function ApplicationRanking() {
 
   console.log(applicationsWithScore);
 
+  const exportToCsv = (category: any) => {
+    // Filter and sort applications for the selected category
+    let filteredApps;
+
+    if (category === "all") {
+      filteredApps = applicationsWithScore;
+    } else {
+      filteredApps = applicationsWithScore
+        .filter((app) => app.category === category)
+        .sort((a, b) => (b.indexScore ?? 0) - (a.indexScore ?? 0));
+    }
+
+    if (filteredApps.length === 0) {
+      alert("No data to export for this category");
+      return;
+    }
+
+    const allSubjects = Array.from(
+      new Set(filteredApps.flatMap((app) => Object.keys(app.marks || {})))
+    );
+
+    // Step 2: Define headers
+    const headers = [
+      "Rank",
+      "Full Name",
+      "Course",
+      "Email",
+      "Index Score",
+      "Status",
+      "Percentage",
+
+      // Guardian details
+      "Guardian Name",
+      "Guardian Occupation",
+      "Guardian Relationship",
+      "Guardian Monthly Income",
+      "Guardian Phone Number",
+
+      // Dynamic subject headers
+      ...allSubjects.map(
+        (subject) =>
+          subject
+            .replace(/([A-Z])/g, " $1") // Optional: Split camelCase
+            .replace(/^./, (str) => str.toUpperCase()) // Capitalize first letter
+      ),
+    ];
+
+    // Step 3: Create CSV rows
+    const rows = filteredApps.map((app, idx) => {
+      const subjectMarks = allSubjects.map(
+        (subject) => app.marks?.[subject] ?? ""
+      );
+
+      return [
+        idx + 1,
+        getFullName(app),
+        app.course,
+        app.email,
+        app.indexScore ?? "N/A",
+        app.reason ?? "",
+        app.percentage ? Number(app.percentage).toFixed(2) + "%" : "",
+
+        // Guardian Info
+        app.guardian?.name ?? "",
+        app.guardian?.occupation ?? "",
+        app.guardian?.relationship ?? "",
+        app.guardian?.monthlyIncome ?? "",
+        app.guardian?.phoneNumber ?? "",
+
+        // Dynamic subject marks
+        ...subjectMarks,
+      ];
+    });
+
+    // Combine headers and rows
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((row) =>
+        row
+          .map(
+            (field) => `"${String(field).replace(/"/g, '""')}"` // Escape quotes in CSV
+          )
+          .join(",")
+      ),
+    ].join("\n");
+
+    // Create download link
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute(
+      "download",
+      `${category}_applications_${new Date().toISOString().slice(0, 10)}.csv`
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Applications</h1>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">Applications</h1>
+      </div>
 
-      <div className="flex border-b border-gray-300 gap-2 flex-wrap">
+      <div className="flex border-b flex-row border-gray-300 gap-2">
         {tabs.map((tab, index) => (
-          <div
-            key={index}
-            onClick={() => setCurrentTabs(tab.category)}
-            className={`px-4 py-2 cursor-pointer font-medium border-b-2 rounded-t-md
-              ${
-                currentTab === tab.category
-                  ? "border-transparent text-white bg-primary-600"
-                  : "border-blue-500 text-blue-600 bg-white"
-              }`}
-          >
-            {tab.title}
+          <div key={index} className="flex items-center flex-row">
+            <div
+              onClick={() => setCurrentTabs(tab.category)}
+              className={`px-4 flex flex-row items-center gap-2 w-auto text-sm justify-between py-2 cursor-pointer font-medium border-b-2 rounded-t-md
+                ${
+                  currentTab === tab.category
+                    ? "border-transparent text-white bg-primary-600"
+                    : "border-blue-500 text-blue-600 bg-white"
+                }`}
+            >
+              {tab.title}
+              {currentTab === tab?.category && (
+                <div className="bg-white px-[7px] py-0 flex items-center justify-center text-primary-600 rounded-full">
+                  <span className="text-sm mt-1">
+                    {
+                      applicationsWithScore.filter(
+                        (app) => app.category === currentTab
+                      ).length
+                    }
+                  </span>
+                </div>
+              )}
+              {currentTab === tab?.category && (
+                <button
+                  onClick={() => exportToCsv(currentTab)}
+                  className="ml-2 px-3 py-1 bg-white hover:bg-gray-300 rounded text-primary-600 text-sm font-semibold"
+                  title="Export to CSV"
+                >
+                  ↓ Export
+                </button>
+              )}
+            </div>
           </div>
         ))}
+        <button
+          onClick={() => exportToCsv("all")}
+          className="ml-2 px-3 py-0 bg-white hover:bg-gray-300 rounded text-primary-600 border-[1px] border-primary-600 text-sm"
+          title="Export to CSV"
+        >
+          ↓ Export All
+        </button>
       </div>
 
       <div className="mt-6">
@@ -312,13 +442,20 @@ export default function ApplicationRanking() {
                   <div className="flex gap-2 pt-2">
                     <Link
                       href={`/dashboard/application/view/${app?.appId}`}
-                      className="text-white bg-primary-600 hover:bg-blue-700 px-3 py-1 rounded text-sm"
+                      className="text-white bg-primary-600 hover:bg-blue-700 px-3 py-1 rounded text-sm flex items-center"
                     >
                       View Application
                     </Link>
                     <Link
+                      href={app?.certificateUrl || ""}
+                      target="_blank"
+                      className="text-primary-600 border-[2px] border-primary-600 hover:bg-blue-700 px-3 py-1 rounded text-sm"
+                    >
+                      View Certificate
+                    </Link>
+                    <Link
                       href={`/dashboard/application/download/${app?.appId}`}
-                      className="text-white bg-green-600 hover:bg-green-700 px-3 py-1 rounded text-sm"
+                      className="text-white bg-green-600 hover:bg-green-700 px-3 py-1 rounded text-sm flex items-center"
                     >
                       Download Application
                     </Link>

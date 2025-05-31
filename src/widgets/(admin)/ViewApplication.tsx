@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
-import { db } from "@lib/firebase";
+import { app, db } from "@lib/firebase";
 import Link from "next/link";
 import { Application } from "../../common/interface/interface";
 
@@ -350,10 +350,19 @@ export default function ViewApplication() {
               ))}
             </div>
           </div>
-          <InfoItem
-            label="Max Marks"
-            value={application?.totalofMaxMarks ?? ""}
-          />
+          {application?.totalofMaxMarks && (
+            <InfoItem
+              label="Max Marks"
+              value={application?.totalofMaxMarks ?? ""}
+            />
+          )}
+          <Link
+            href={application?.certificateUrl || ""}
+            target="_blank"
+            className="bg-primary-600 text-white px-3 py-2 rounded-md"
+          >
+            View Certificate
+          </Link>
         </Section>
 
         {/* Guardian Info */}
