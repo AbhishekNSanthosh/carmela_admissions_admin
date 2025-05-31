@@ -1,12 +1,9 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import {
-  getFirestore,
-  collection,
-  getDocs,
-} from "firebase/firestore";
+import { getFirestore, collection, getDocs } from "firebase/firestore";
 import { app } from "@lib/firebase";
 import { Application } from "../../common/interface/interface";
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
@@ -51,6 +48,25 @@ export default function Home() {
     fetchApplications();
   }, []);
 
+  // Data for Pie Chart
+  const pieData = [
+    { name: "Mgmt Quota - Lateral", value: stats.mgmtLateral },
+    { name: "Mgmt Merit - Lateral", value: stats.meritLateral },
+    { name: "Mgmt Quota - Regular", value: stats.mgmtRegular },
+    { name: "Mgmt Merit - Regular", value: stats.meritRegular },
+  ];
+
+  // Data for Bar Chart
+  const barData = [
+    { name: "Mgmt Lateral", applications: stats.mgmtLateral },
+    { name: "Merit Lateral", applications: stats.meritLateral },
+    { name: "Mgmt Regular", applications: stats.mgmtRegular },
+    { name: "Merit Regular", applications: stats.meritRegular },
+  ];
+
+  // Color palette for charts
+  const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
+
   if (loading) {
     return (
       <div className="w-full h-full flex items-center justify-center">
@@ -60,21 +76,71 @@ export default function Home() {
   }
 
   return (
-    <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      <StatCard title="Total Applications" value={stats.total} />
-      <StatCard title="Mgmt Quota - Lateral Entry" value={stats.mgmtLateral} />
-      <StatCard title="Mgmt Merit - Lateral Entry" value={stats.meritLateral} />
-      <StatCard title="Mgmt Quota - Regular" value={stats.mgmtRegular} />
-      <StatCard title="Mgmt Merit - Regular" value={stats.meritRegular} />
+    <div className="p-6 space-y-8">
+      {/* Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <StatCard title="Total Applications" value={stats.total} />
+        <StatCard title="Mgmt Quota - Lateral" value={stats.mgmtLateral} />
+        <StatCard title="Mgmt Merit - Lateral" value={stats.meritLateral} />
+        <StatCard title="Mgmt Quota - Regular" value={stats.mgmtRegular} />
+        <StatCard title="Mgmt Merit - Regular" value={stats.meritRegular} />
+      </div>
+
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Pie Chart */}
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Application Distribution</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={pieData}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                outerRadius={80}
+                fill="#8884d8"
+                dataKey="value"
+                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+              >
+                {pieData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Bar Chart */}
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Applications by Category</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={barData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="applications" fill="#8884d8" name="Applications">
+                {barData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
     </div>
   );
 }
 
 function StatCard({ title, value }: { title: string; value: number }) {
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 text-center border border-gray-200 hover:shadow-lg transition">
-      <h3 className="text-lg font-medium text-gray-700">{title}</h3>
-      <p className="text-3xl font-bold text-blue-600 mt-2">{value}</p>
+    <div className="bg-white rounded-lg shadow-md p-4 text-center border border-gray-200 hover:shadow-lg transition">
+      <h3 className="text-sm font-medium text-gray-600">{title}</h3>
+      <p className="text-2xl font-bold text-blue-600 mt-1">{value}</p>
     </div>
   );
 }

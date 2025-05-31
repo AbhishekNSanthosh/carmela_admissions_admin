@@ -328,51 +328,55 @@ export default function ApplicationRanking() {
     <div className="p-4">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Applications</h1>
-      </div>
-
-      <div className="flex border-b flex-row border-gray-300 gap-2">
-        {tabs.map((tab, index) => (
-          <div key={index} className="flex items-center flex-row">
-            <div
-              onClick={() => setCurrentTabs(tab.category)}
-              className={`px-4 flex flex-row items-center gap-2 w-auto text-sm justify-between py-2 cursor-pointer font-medium border-b-2 rounded-t-md
-                ${
-                  currentTab === tab.category
-                    ? "border-transparent text-white bg-primary-600"
-                    : "border-blue-500 text-blue-600 bg-white"
-                }`}
-            >
-              {tab.title}
-              {currentTab === tab?.category && (
-                <div className="bg-white px-[7px] py-0 flex items-center justify-center text-primary-600 rounded-full">
-                  <span className="text-sm mt-1">
-                    {
-                      applicationsWithScore.filter(
-                        (app) => app.category === currentTab
-                      ).length
-                    }
-                  </span>
-                </div>
-              )}
-              {currentTab === tab?.category && (
-                <button
-                  onClick={() => exportToCsv(currentTab)}
-                  className="ml-2 px-3 py-1 bg-white hover:bg-gray-300 rounded text-primary-600 text-sm font-semibold"
-                  title="Export to CSV"
-                >
-                  ↓ Export
-                </button>
-              )}
-            </div>
-          </div>
-        ))}
         <button
           onClick={() => exportToCsv("all")}
-          className="ml-2 px-3 py-0 bg-white hover:bg-gray-300 rounded text-primary-600 border-[1px] border-primary-600 text-sm"
-          title="Export to CSV"
+          className="ml-auto px-3 py-1 bg-white hover:bg-gray-300 rounded text-primary-600 border border-primary-600 text-sm font-medium"
+          title="Export all to CSV"
         >
           ↓ Export All
         </button>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2 border-b border-gray-300 pb-2">
+        {tabs.map((tab, index) => {
+          const isActive = currentTab === tab.category;
+          const count = applicationsWithScore.filter(
+            (app) => app.category === tab.category
+          ).length;
+
+          return (
+            <div key={index} className="flex items-center">
+              <div
+                onClick={() => setCurrentTabs(tab.category)}
+                className={`px-4 py-2 flex items-center gap-2 cursor-pointer font-medium text-sm border-b-2 rounded-t-md transition-all
+            ${
+              isActive
+                ? "bg-primary-600 text-white border-transparent"
+                : "bg-white text-blue-600 border-blue-500"
+            }
+          `}
+              >
+                <span>{tab.title}</span>
+
+                {isActive && (
+                  <div className="bg-white text-primary-600 px-2 py-0.5 rounded-full text-xs font-semibold">
+                    {count}
+                  </div>
+                )}
+
+                {isActive && (
+                  <button
+                    onClick={() => exportToCsv(tab.category)}
+                    className="ml-2 px-2 py-1 bg-white hover:bg-gray-300 rounded text-primary-600 text-xs font-semibold border border-primary-600"
+                    title="Export to CSV"
+                  >
+                    ↓ Export
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       <div className="mt-6">
