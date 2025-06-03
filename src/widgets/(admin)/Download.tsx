@@ -110,13 +110,13 @@ const styles = StyleSheet.create({
     fontSize: 9,
   },
   tableCell: {
-    padding: 4,
-    borderRightWidth: 0.5,
-    borderRightColor: "#999",
-    flex: 1,
-    fontSize: 9,
-    transform:"capitalize"
-  },
+  padding: 4,
+  borderRightWidth: 0.5,
+  borderRightColor: "#999",
+  flex: 1,
+  fontSize: 9,
+  textTransform: "capitalize", // ✅ Fixed this line
+},
   lastCell: {
     borderRightWidth: 0,
   },
@@ -150,13 +150,41 @@ const styles = StyleSheet.create({
   },
 });
 
+const SafePDFDocument = ({
+  application,
+  score,
+  percent,
+}: {
+  application: Application;
+  score: number;
+  percent?: number;
+}) => {
+  try {
+    return (
+      <ApplicationPDFDocument
+        indexScore={score}
+        application={application}
+        percent={percent}
+      />
+    );
+  } catch (error) {
+    return (
+      <Document>
+        <Page>
+          <Text>Failed to generate PDF. Please try again.</Text>
+        </Page>
+      </Document>
+    );
+  }
+};
+
 const ApplicationPDFDocument = ({
   indexScore,
   application,
   percent,
 }: {
   application: Application;
-  indexScore: Number;
+  indexScore: number;
   percent?: number;
 }) => {
   const sslcOrder = [
@@ -172,25 +200,31 @@ const ApplicationPDFDocument = ({
     "informationTechnology",
   ];
 
-  const marksEntries = application?.marks
-    ? Object.entries(application.marks)
-    : [];
+  const checklistItems = [
+    "I have filled-in the correct information.",
+    "I have uploaded the copy of statement of marks card of class X.",
+    "My parent/guardian and I have signed the declaration on the printed application form.",
+    "I am attaching the copy of application processing fee challan.",
+  ];
+
+  const marksEntries = application?.marks ? Object.entries(application.marks) : [];
 
   const sortedEntries =
     application?.universityOrBoard === "SSLC"
-      ? sslcOrder?.map((key) => [key, application.marks[key]])
-          .filter(([_, value]) => value !== undefined) // remove subjects not present
+      ? sslcOrder
+          .map((key) => [key, application.marks[key]])
+          .filter(([_, value]) => value !== undefined)
       : marksEntries;
+
+  const entriesToRender = sortedEntries;
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.logoContainer}>
-            <Image
-              style={styles.logo}
-              src="/logomain.png" // Replace with your actual logo path
-            />
+            <Image style={styles.logo} src="/logomain.png" />
           </View>
           <Text style={styles.title}>Carmel Polytechnic College</Text>
           <Text style={styles.subtitle}>
@@ -198,8 +232,7 @@ const ApplicationPDFDocument = ({
           </Text>
           <Text style={{ marginBottom: 4 }}>{application?.title}</Text>
           <Text style={{ fontSize: 8 }}>
-            Govt. Management Quota Application No. (www.polyadmission.org):{" "}
-            {application?.govtQuotaApplicationNo || "N/A"}
+            Govt. Management Quota Application No. (www.polyadmission.org): {application?.govtQuotaApplicationNo || "N/A"}
           </Text>
         </View>
 
@@ -208,16 +241,13 @@ const ApplicationPDFDocument = ({
         {/* Application Meta */}
         <View style={styles.metaInfo}>
           <Text>Application Number: {application?.generatedId || "Nill"}</Text>
-          {application?.course === "X" && (
-            <Text>{"Index Score: " + (indexScore?.toString() ?? "")}</Text>
-          )}
+          <Text>
+            {application?.course === "X"
+              ? `Index Score: ${indexScore ?? ""}`
+              : `Score: ${indexScore ?? ""}`}
+          </Text>
           {application?.course !== "X" && (
-            <Text>{"Score: " + (indexScore?.toString() ?? "")}</Text>
-          )}
-          {application?.course !== "X" && (
-            <Text>
-              {"Percentage: " + (percent?.toFixed(2)?.toString() ?? "")}%
-            </Text>
+            <Text>Percentage: {percent?.toFixed(2) ?? ""}%</Text>
           )}
           <Text>Fees to be remitted: Rs. {application?.fee}/-</Text>
         </View>
@@ -225,50 +255,18 @@ const ApplicationPDFDocument = ({
         {/* Branch Preference */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Branch Preference</Text>
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              fontSize: 9,
-            }}
-          >
-            <Text>
-              <Text style={styles.boldText}>Preference 1:</Text>{" "}
-              {application?.preferenceOne || "Nill"}
-            </Text>
-            <Text>
-              <Text style={styles.boldText}>Preference 2:</Text>{" "}
-              {application?.preferenceTwo || "Nill"}
-            </Text>
-            <Text>
-              <Text style={styles.boldText}>Preference 3:</Text>{" "}
-              {application?.preferenceThree || "Nill"}
-            </Text>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", fontSize: 9 }}>
+            <Text><Text style={styles.boldText}>Preference 1:</Text> {application?.preferenceOne || "Nill"}</Text>
+            <Text><Text style={styles.boldText}>Preference 2:</Text> {application?.preferenceTwo || "Nill"}</Text>
+            <Text><Text style={styles.boldText}>Preference 3:</Text> {application?.preferenceThree || "Nill"}</Text>
           </View>
-          {application?.preferenceFour ||
-            application?.preferenceFive ||
-            (application?.preferenceFive && (
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  fontSize: 9,
-                }}
-              >
-                <Text>
-                  <Text style={styles.boldText}>Preference 4:</Text>{" "}
-                  {application?.preferenceFour || "Nill"}
-                </Text>
-                <Text>
-                  <Text style={styles.boldText}>Preference 5:</Text>{" "}
-                  {application?.preferenceFive || "Nill"}
-                </Text>
-                <Text>
-                  <Text style={styles.boldText}>Preference 6:</Text>{" "}
-                  {application?.preferenceSix || "Nill"}
-                </Text>
-              </View>
-            ))}
+          {(application?.preferenceFour || application?.preferenceFive || application?.preferenceSix) && (
+            <View style={{ flexDirection: "row", justifyContent: "space-between", fontSize: 9 }}>
+              <Text><Text style={styles.boldText}>Preference 4:</Text> {application?.preferenceFour || "Nill"}</Text>
+              <Text><Text style={styles.boldText}>Preference 5:</Text> {application?.preferenceFive || "Nill"}</Text>
+              <Text><Text style={styles.boldText}>Preference 6:</Text> {application?.preferenceSix || "Nill"}</Text>
+            </View>
+          )}
         </View>
 
         {/* Candidate Profile */}
@@ -276,53 +274,22 @@ const ApplicationPDFDocument = ({
           <Text style={styles.sectionTitle}>Candidate Profile</Text>
           <View style={styles.gridContainer}>
             <View style={styles.gridHalf}>
-              <Text>
-                <Text style={styles.boldText}>Name of the Applicant:</Text>{" "}
-                {application?.firstName || "Nill"}{" "}
-                {application?.lastName || "Nill"}
-              </Text>
-              <Text>
-                <Text style={styles.boldText}>Date of Birth:</Text>
-                {application?.dateOfBirth || "Nill"}
-              </Text>
-              <Text>
-                <Text style={styles.boldText}>Religion:</Text>{" "}
-                {application?.religion || "Nill"}
-              </Text>
-              <Text>
-                <Text style={styles.boldText}>Email:</Text> {application?.email}
-              </Text>
-              <Text>
-                <Text style={styles.boldText}>Aadhar Number:</Text>{" "}
-                {application?.aadhaarNo || "Nill"}
-              </Text>
+              <Text><Text style={styles.boldText}>Name of the Applicant:</Text> {application?.firstName || "Nill"} {application?.lastName || "Nill"}</Text>
+              <Text><Text style={styles.boldText}>Date of Birth:</Text> {application?.dateOfBirth || "Nill"}</Text>
+              <Text><Text style={styles.boldText}>Religion:</Text> {application?.religion || "Nill"}</Text>
+              <Text><Text style={styles.boldText}>Email:</Text> {application?.email}</Text>
+              <Text><Text style={styles.boldText}>Aadhar Number:</Text> {application?.aadhaarNo || "Nill"}</Text>
             </View>
             <View style={styles.gridHalf}>
-              <Text>
-                <Text style={styles.boldText}>Gender:</Text>{" "}
-                {application?.gender || "Nill"}
-              </Text>
-              <Text>
-                <Text style={styles.boldText}>Place of Birth:</Text>{" "}
-                {application?.placeOfBirth || "Nill"}
-              </Text>
-              <Text>
-                <Text style={styles.boldText}>Community:</Text>{" "}
-                {application?.community || "Nill"}
-              </Text>
-              <Text>
-                <Text style={styles.boldText}>Phone Number:</Text>{" "}
-                {application?.contactNo || "Nill"}
-              </Text>
-              <Text>
-                <Text style={styles.boldText}>Alternate Phone Number:</Text>{" "}
-                {application?.alternateContactNo || "Nill"}
-              </Text>
+              <Text><Text style={styles.boldText}>Gender:</Text> {application?.gender || "Nill"}</Text>
+              <Text><Text style={styles.boldText}>Place of Birth:</Text> {application?.placeOfBirth || "Nill"}</Text>
+              <Text><Text style={styles.boldText}>Community:</Text> {application?.community || "Nill"}</Text>
+              <Text><Text style={styles.boldText}>Phone Number:</Text> {application?.contactNo || "Nill"}</Text>
+              <Text><Text style={styles.boldText}>Alternate Phone Number:</Text> {application?.alternateContactNo || "Nill"}</Text>
             </View>
           </View>
           <Text style={{ marginTop: 4 }}>
-            <Text style={styles.boldText}>Address:</Text>{" "}
-            {application?.addressLine1 + " " + application?.addressLine2}
+            <Text style={styles.boldText}>Address:</Text> {`${application?.addressLine1 ?? ""} ${application?.addressLine2 ?? ""}`.trim() || "Nill"}
           </Text>
         </View>
 
@@ -330,103 +297,40 @@ const ApplicationPDFDocument = ({
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Academic History</Text>
           <View style={styles.table}>
-            {/* Table Header */}
             <View style={[styles.tableRow, styles.tableHeader]}>
               <Text style={[styles.tableCell, { flex: 0.8 }]}>Course</Text>
               <Text style={[styles.tableCell, { flex: 2 }]}>Institution</Text>
               <Text style={[styles.tableCell, { flex: 1.2 }]}>Board</Text>
-              <Text style={[styles.tableCell, styles.lastCell, { flex: 0.6 }]}>
-                Year
-              </Text>
+              <Text style={[styles.tableCell, styles.lastCell, { flex: 0.6 }]}>Year</Text>
             </View>
-            {/* Table Row */}
             <View style={styles.tableRow}>
-              <Text style={[styles.tableCell, { flex: 0.8 }]}>
-                {application?.course}
-              </Text>
-              <Text style={[styles.tableCell, { flex: 2 }]}>
-                {application?.institution}
-              </Text>
-              <Text style={[styles.tableCell, { flex: 1.2 }]}>
-                {application?.universityOrBoard}
-              </Text>
-              <Text style={[styles.tableCell, styles.lastCell, { flex: 0.6 }]}>
-                2022
-              </Text>
+              <Text style={[styles.tableCell, { flex: 0.8 }]}>{application?.course}</Text>
+              <Text style={[styles.tableCell, { flex: 2 }]}>{application?.institution}</Text>
+              <Text style={[styles.tableCell, { flex: 1.2 }]}>{application?.universityOrBoard}</Text>
+              <Text style={[styles.tableCell, styles.lastCell, { flex: 0.6 }]}>2022</Text>
             </View>
           </View>
         </View>
 
         {/* Qualifying Examination */}
         <View style={styles.section}>
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              marginBottom: 6,
-            }}
-          >
-            <Text style={styles.boldText}>
-              Qualifying Examination: {application?.course}
-            </Text>
-            <Text style={styles.boldText}>
-              Chances taken: {application?.chancesTaken}
-            </Text>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 6 }}>
+            <Text style={styles.boldText}>Qualifying Examination: {application?.course}</Text>
+            <Text style={styles.boldText}>Chances taken: {application?.chancesTaken}</Text>
           </View>
           <View style={styles.table}>
-            {/* Table Header */}
             <View style={[styles.tableRow, styles.tableHeader]}>
               <Text style={[styles.tableCell, { flex: 0.3 }]}>No.</Text>
               <Text style={[styles.tableCell, { flex: 2 }]}>Subject</Text>
-              <Text style={[styles.tableCell, styles.lastCell, { flex: 0.4 }]}>
-                Grade
-              </Text>
+              <Text style={[styles.tableCell, styles.lastCell, { flex: 0.4 }]}>Grade</Text>
             </View>
-            {/* Table Rows */}
-            {application?.universityOrBoard === "SSLC" ? (
-              <>
-                {(sortedEntries || []).map(([subject, grade], index) => (
-                  <View key={index} style={styles.tableRow}>
-                    <Text style={[styles.tableCell, { flex: 0.3 }]}>
-                      {index + 1}
-                    </Text>
-                    <Text style={[styles.tableCell, { flex: 2 }]}>
-                      {subject.replace(/([A-Z])/g, " $1").trim()}
-                    </Text>
-                    <Text
-                      style={[styles.tableCell, styles.lastCell, { flex: 0.4 }]}
-                    >
-                      {grade}
-                    </Text>
-                  </View>
-                ))}
-              </>
-            ) : (
-              <>
-                {Object.entries(application?.marks || {})?.map(
-                  ([subject, grade], index) => (
-                    <View key={index} style={styles.tableRow}>
-                      <Text style={[styles.tableCell, { flex: 0.3 }]}>
-                        {index + 1}
-                      </Text>
-                      <Text style={[styles.tableCell, { flex: 2 }]}>
-                        {" "}
-                        {subject.replace(/([A-Z])/g, " $1").trim()}
-                      </Text>
-                      <Text
-                        style={[
-                          styles.tableCell,
-                          styles.lastCell,
-                          { flex: 0.4 },
-                        ]}
-                      >
-                        {grade}
-                      </Text>
-                    </View>
-                  )
-                )}
-              </>
-            )}
+            {entriesToRender.map(([subject, grade], index) => (
+              <View key={index} style={styles.tableRow}>
+                <Text style={[styles.tableCell, { flex: 0.3 }]}>{index + 1}</Text>
+                <Text style={[styles.tableCell, { flex: 2 }]}>{subject.replace(/([A-Z])/g, " $1").trim()}</Text>
+                <Text style={[styles.tableCell, styles.lastCell, { flex: 0.4 }]}>{grade}</Text>
+              </View>
+            ))}
           </View>
         </View>
 
@@ -435,104 +339,58 @@ const ApplicationPDFDocument = ({
           <Text style={styles.sectionTitle}>Guardian Info</Text>
           <View style={styles.gridContainer}>
             <View style={styles.gridHalf}>
-              <Text>
-                <Text style={styles.boldText}>Name of the Guardian:</Text>{" "}
-                {application?.guardian?.name}
-              </Text>
-              <Text>
-                <Text style={styles.boldText}>Occupation:</Text>{" "}
-                {application?.guardian?.occupation}
-              </Text>
-              <Text>
-                <Text style={styles.boldText}>Phone Number:</Text>{" "}
-                {application?.guardian?.phoneNumber}
-              </Text>
+              <Text><Text style={styles.boldText}>Name of the Guardian:</Text> {application?.guardian?.name}</Text>
+              <Text><Text style={styles.boldText}>Occupation:</Text> {application?.guardian?.occupation}</Text>
+              <Text><Text style={styles.boldText}>Phone Number:</Text> {application?.guardian?.phoneNumber}</Text>
             </View>
             <View style={styles.gridHalf}>
-              <Text>
-                <Text style={styles.boldText}>
-                  Relationship with Applicant:
-                </Text>{" "}
-                {application?.guardian?.relationship}
-              </Text>
-              <Text>
-                <Text style={styles.boldText}>Monthly Income:</Text>{" "}
-                {application?.guardian?.monthlyIncome}
-              </Text>
+              <Text><Text style={styles.boldText}>Relationship with Applicant:</Text> {application?.guardian?.relationship}</Text>
+              <Text><Text style={styles.boldText}>Monthly Income:</Text> {application?.guardian?.monthlyIncome}</Text>
             </View>
           </View>
           <Text style={{ marginTop: 4 }}>
-            <Text style={styles.boldText}>Address (Residence):</Text>{" "}
-            {application?.guardian?.addressLineOne +
-              " " +
-              application?.guardian?.addressLineTwo}
+            <Text style={styles.boldText}>Address (Residence):</Text> {`${application?.guardian?.addressLineOne ?? ""} ${application?.guardian?.addressLineTwo ?? ""}`.trim() || "Nill"}
           </Text>
         </View>
       </Page>
 
-      {/* New Page for Checklist */}
+      {/* Checklist Page */}
       <Page size="A4" style={styles.page}>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Fee payment</Text>
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              fontSize: 9,
-            }}
-          >
-            <Text>
-              <Text style={styles.boldText}>Transaction Id: </Text>{" "}
-              {application?.transactionId || "Nill"}
-            </Text>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", fontSize: 9 }}>
+            <Text><Text style={styles.boldText}>Transaction Id: </Text> {application?.transactionId || "Nill"}</Text>
           </View>
         </View>
+
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Checklist for the Applicant</Text>
-
           <View style={styles.table}>
-            {/* Table Header */}
             <View style={[styles.tableRow, styles.tableHeader]}>
               <Text style={[styles.tableCell, { flex: 0.3 }]}>No.</Text>
               <Text style={[styles.tableCell, { flex: 2.5 }]}>Item</Text>
               <Text style={[styles.tableCell, { flex: 0.5 }]}>Yes/No</Text>
             </View>
-
-            {/* Table Rows */}
-            {[
-              "I have filled-in the correct information.",
-              "I have uploaded the copy of statement of marks card of class X.",
-              "My parent/guardian and I have signed the declaration on the printed application form.",
-              "I am attaching the copy of application processing fee challan.",
-            ].map((item, index) => (
+            {checklistItems.map((item, index) => (
               <View key={index} style={styles.tableRow}>
-                <Text style={[styles.tableCell, { flex: 0.3 }]}>
-                  {index + 1}.
-                </Text>
+                <Text style={[styles.tableCell, { flex: 0.3 }]}>{index + 1}.</Text>
                 <Text style={[styles.tableCell, { flex: 2.5 }]}>{item}</Text>
                 <Text style={[styles.tableCell, { flex: 0.5 }]}></Text>
               </View>
             ))}
           </View>
 
-          {/* Signature Section */}
           <View style={[styles.signatureSection, { marginTop: 30 }]}>
             <Text>Place: _________________________</Text>
             <Text>
-              Date:{" "}
-              {new Date()
-                .toLocaleDateString("en-GB", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                })
-                .replace(/\//g, ".")}
+              Date: {new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" }).replace(/\//g, ".")}
             </Text>
             <Text style={{ marginTop: 15 }}>
               Signature of the Candidate: _________________________
             </Text>
           </View>
         </View>
+
         <View
           style={{
             position: "absolute",
@@ -548,9 +406,7 @@ const ApplicationPDFDocument = ({
             paddingTop: 5,
           }}
         >
-          <Text style={{ fontWeight: "bold" }}>
-            Carmel Polytechnic Admission
-          </Text>
+          <Text style={{ fontWeight: "bold" }}>Carmel Polytechnic Admission</Text>
           <Text>Generated on: {new Date().toLocaleString()}</Text>
         </View>
       </Page>
@@ -758,28 +614,27 @@ export default function Download() {
         Click the button below to download your application as a professionally
         formatted PDF.
       </p>
-
-      <PDFDownloadLink
-        document={
-          <ApplicationPDFDocument
-            indexScore={score}
-            application={application}
-            percent={percentage}
-          />
-        }
-        fileName={`${
-          application?.firstName + "_" + application?.lastName || "application"
-        }.pdf`}
-      >
-        {({ loading }) => (
-          <button
-            disabled={loading}
-            className="px-6 py-3 text-lg font-medium text-white bg-gradient-to-r from-primary-600 to-primary-500 rounded-full shadow-lg hover:from-blue-700 hover:to-blue-600 transition-all duration-300 disabled:opacity-50"
-          >
-            {loading ? "Preparing your document..." : "Download Your PDF"}
-          </button>
-        )}
-      </PDFDownloadLink>
+      {application && (
+        <PDFDownloadLink
+          document={
+            <SafePDFDocument
+              application={application}
+              score={score}
+              percent={percentage}
+            />
+          }
+          fileName={`${application.firstName}_Application.pdf`}
+        >
+          {({ loading }) => (
+            <button
+              disabled={loading}
+              className="px-6 py-3 text-lg font-medium text-white bg-gradient-to-r from-primary-600 to-primary-500 rounded-full shadow-lg hover:from-blue-700 hover:to-blue-600 transition-all duration-300 disabled:opacity-50"
+            >
+              {loading ? "Preparing your document..." : "Download Your PDF"}
+            </button>
+          )}
+        </PDFDownloadLink>
+      )}
     </div>
   );
 }
