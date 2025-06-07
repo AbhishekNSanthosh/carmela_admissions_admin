@@ -307,7 +307,7 @@ const ApplicationPDFDocument = ({
               <Text style={[styles.tableCell, { flex: 0.8 }]}>{application?.course}</Text>
               <Text style={[styles.tableCell, { flex: 2 }]}>{application?.institution}</Text>
               <Text style={[styles.tableCell, { flex: 1.2 }]}>{application?.universityOrBoard}</Text>
-              <Text style={[styles.tableCell, styles.lastCell, { flex: 0.6 }]}>2022</Text>
+              <Text style={[styles.tableCell, styles.lastCell, { flex: 0.6 }]}>{application?.passedOn}</Text>
             </View>
           </View>
         </View>
