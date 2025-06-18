@@ -249,11 +249,19 @@ export default function ApplicationRanking() {
     const headers = [
       "Rank",
       "Full Name",
+      "Generated Id",
       "Course",
       "Email",
       "Index Score",
-      "Status",
       "Percentage",
+      "University/Board",
+      "Institution",
+      "First Preference",
+      "Second Preference",
+      "Third ThiPreference",
+      "Fourth Preference",
+      "Fifth Preference",
+      "Sixth Preference",
 
       // Guardian details
       "Guardian Name",
@@ -280,11 +288,19 @@ export default function ApplicationRanking() {
       return [
         idx + 1,
         getFullName(app),
+        app.generatedId,
         app.course,
         app.email,
         app.indexScore ?? "N/A",
-        app.reason ?? "",
         app.percentage ? Number(app.percentage).toFixed(2) + "%" : "",
+        app.universityOrBoard,
+        app.institution,
+        app.preferenceOne,
+        app.preferenceTwo,
+        app.preferenceThree,
+        app.preferenceFour,
+        app.preferenceFive,
+        app.preferenceSix,
 
         // Guardian Info
         app.guardian?.name ?? "",
@@ -328,13 +344,22 @@ export default function ApplicationRanking() {
     <div className="p-4">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Applications</h1>
-        <button
+        <div className="flex flex-row gap-2">
+          <Link href={'/dashboard/application/all'}
+
+          className="ml-auto px-3 py-1 bg-white hover:bg-gray-300 rounded text-primary-600 border border-primary-600 text-sm font-medium"
+          title="Export all to CSV"
+        >
+         View All Applications
+        </Link>
+          <button
           onClick={() => exportToCsv("all")}
           className="ml-auto px-3 py-1 bg-white hover:bg-gray-300 rounded text-primary-600 border border-primary-600 text-sm font-medium"
           title="Export all to CSV"
         >
           ↓ Export All
         </button>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-2 border-b border-gray-300 pb-2">

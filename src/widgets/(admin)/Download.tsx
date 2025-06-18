@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
     width: "100%",
     borderWidth: 0.5,
     borderColor: "#999",
-    marginTop: 6,
+    marginTop: 2,
   },
   tableRow: {
     flexDirection: "row",
@@ -209,12 +209,65 @@ const ApplicationPDFDocument = ({
 
   const marksEntries = application?.marks ? Object.entries(application.marks) : [];
 
-  const sortedEntries =
-    application?.universityOrBoard === "SSLC"
-      ? sslcOrder
-          .map((key) => [key, application.marks[key]])
-          .filter(([_, value]) => value !== undefined)
-      : marksEntries;
+const normalizeSubjectName = (subject: string): string => {
+  // Convert to lowercase and remove special characters/spaces
+  return subject
+    .toLowerCase()
+    .replace(/\s+/g, '') // Remove spaces
+    .replace(/[^a-z0-9]/g, ''); // Remove special characters
+};
+
+const getSortedEntries = (application: Application) => {
+  if (!application?.marks) return [];
+  
+  const isSSLC = application?.universityOrBoard?.toLocaleLowerCase() === "sslc";
+  
+  if (!isSSLC) {
+    return Object.entries(application.marks).filter(([_, value]) => value !== undefined);
+  }
+
+  // Define the standard SSLC subject order with normalized names
+  const sslcOrder = [
+    "firstLanguagePaperI",
+    "firstLanguagePaperII",
+    "english",
+    "hindi",
+    "socialScience",
+    "physics",
+    "chemistry",
+    "biology",
+    "mathematics",
+    "informationTechnology",
+  ].map(normalizeSubjectName);
+
+  // Create a map of normalized subject names to their original names and values
+  const subjectMap = new Map();
+  Object.entries(application.marks).forEach(([subject, value]) => {
+    if (value !== undefined) {
+      subjectMap.set(normalizeSubjectName(subject), { originalName: subject, value });
+    }
+  });
+
+  // Sort according to SSLC order, with unknown subjects at the end
+  return sslcOrder
+    .map(normalizedSubject => {
+      if (subjectMap.has(normalizedSubject)) {
+        const entry = subjectMap.get(normalizedSubject);
+        return [entry.originalName, entry.value];
+      }
+      return null;
+    })
+    .filter(entry => entry !== null)
+    .concat(
+      // Add any subjects not in the standard order
+      Array.from(subjectMap.entries())
+        .filter(([normalizedSubject]) => !sslcOrder.includes(normalizedSubject))
+        .map(([_, entry]) => [entry.originalName, entry.value])
+    );
+};
+
+// Usage:
+const sortedEntries = getSortedEntries(application);
 
   const entriesToRender = sortedEntries;
 
@@ -346,11 +399,9 @@ const ApplicationPDFDocument = ({
             <View style={styles.gridHalf}>
               <Text><Text style={styles.boldText}>Relationship with Applicant:</Text> {application?.guardian?.relationship}</Text>
               <Text><Text style={styles.boldText}>Monthly Income:</Text> {application?.guardian?.monthlyIncome}</Text>
+                         <Text><Text style={styles.boldText}>Address (Residence):</Text> {`${application?.guardian?.addressLineOne ?? ""} ${application?.guardian?.addressLineTwo ?? ""}`.trim() || "Nill"}</Text>
             </View>
           </View>
-          <Text style={{ marginTop: 4 }}>
-            <Text style={styles.boldText}>Address (Residence):</Text> {`${application?.guardian?.addressLineOne ?? ""} ${application?.guardian?.addressLineTwo ?? ""}`.trim() || "Nill"}
-          </Text>
         </View>
       </Page>
 
