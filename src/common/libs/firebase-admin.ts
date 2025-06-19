@@ -1,17 +1,14 @@
 import admin from 'firebase-admin';
 
-const serviceAccount = {
-  projectId: 'poly-admission',
-  clientEmail: 'firebase-adminsdk-fbsvc@poly-admission.iam.gserviceaccount.com',
-  privateKey: `-----BEGIN PRIVATE KEY-----
-MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCzgCQzczTIR6Qx\nZtZC15Gnd6+QEOzyK3gIptOmlZmaivhF/zBzuLuE3NNe+ffBGNW6msnIV9pccNgb\nOxKBgVTQ4ioQZVDk8Ckwv3WFTXfFlZfiUBDtoTIuINyV5iqlUiLY1bJWGuhw3qOh\nKg/oKZq/yUQ8eYDgXmO/RXrm/nivlOudJfpON8OWhPNGS6uLZSGGIukTikKxQM4R\nBPayzw1qiT1QC1F+A7CewGRu8twDeVkfuOM3rtTNcKCKpqYW7nOaNRW670IIcNk3\nYmHOt1yvms6VzRKh+JlyptIqJH5ruIpH7F/6ycseyxJE3tBekDjwWGd2/l3VrOkN\nd73v5sPlAgMBAAECggEATtokTPu3fKHIFbGUvwE+qWAQ3gspY4rH7JkIkf3W38Zb\noTgkmzlUGt389pR9izRzM0mrCZjaQlCKBpBRJVXgofAwRUqUmjWMCq+Ymyn4SvJX\nqeG9Rf5RcmUaMblOE5i82R8q+9tPL8IGBJbbLQQVyFlMYfqILEgarlwBzPaNoqde\nWKecquQ2Csil16bGXaVtLoi3NVETWxcNilTdPg1XEUONIsNZwuM8XICsNp8tMdGk\naiJ7TqHN77tF4jR9JZLLSpb23/EYvHR6wgePFH7LOo36JiyCnrrLOEGlyW+aYhCh\ntHaP2vgn1aYELEp6So21nkTC6F7dnEbYb8HV6PlWYwKBgQDoGic1UVAUbuwR2PG5\nq9glwET8yPsJHg0m2f8gtg+p7EG/a6TX+jys3Oz1Vbl4/zUXNRM8Jmtw6dWgc19f\nXLJh/0QoE9nCNHo2i3UbVVP/tKkJYFzHgXJ4t/+ezrMuSMvYDmkgfAJRXP6wgiYz\n+FgegbQvlNZT5uDqT9/TcoLlOwKBgQDF+34qB3crD+cE4J52hbX+2rlrLV5X5Ck2\ncQbqZmGFsijK5lI0cEXFEMP3+PSibAsviwEWIjKDJ0uCFKtyjB7eQ1sWXJclH5Nj\ncs4xHoZntJw7Dggg4N7Rg1vMpdyiPq+JxOGRh4CVuFalr1Sb+yhroqTLcnknKhcI\nrBUX7QPpXwKBgFZ0x34Y19eEqfLL+N7MoCsPv6LZyojO5N8//MTWjGcjVipTkofQ\n8qEBelK4p+nmRoRqhMu3E/ZvY9/sme4PvXK7f0veeRLaMVv3/ps74ZoyVXTkrCq0\nkUteXp1tKVloTGYimA49oy9jkIt3L3vUWh6i+ddvfZarPcSKFDnTQebZAoGAfElz\nXIMvRnNHPgKcuB8cr48z05q5nUd4r9qo0sHO+xVrEmUguha5Vgs+Ww+I0+Yr537G\nAdUaDMfAWTsMnm5keneiWRlrMTzvVAEgfCmDitsRMOmQJMPGXZSvLnv5VEkx/bUB\nPlDoYhVFH+I/pWQ4bcm+1pFYiUOdDi6pV0nNqNUCgYEA1NLGAzVdW06YbZ/t+OiQ\n/44SmW+v1Vy9sKujNLELIHXkfZRXGMFISvSO3pJeDVe7u4ReoBNrivAgIS+tT6dL\nqwqfZUliiqgpUjbZjFhzAfvTH2/kVO2fwo573T2bTWIrU4QARBEXkDviOqTrFQ0T\nEPbmAL3C75bkEL/9cbfPq9I=
------END PRIVATE KEY-----
-`,
-};
+const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
 
 if (!admin.apps.length) {
-    admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
+  admin.initializeApp({
+    credential: admin.credential.cert({
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey,
+    }),
   });
 }
 
