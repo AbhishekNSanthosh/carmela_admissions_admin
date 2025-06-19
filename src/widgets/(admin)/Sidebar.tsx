@@ -9,6 +9,7 @@ import { FaHome } from "react-icons/fa";
 import { MdScheduleSend } from "react-icons/md";
 import { getAuth, signOut } from "firebase/auth";
 import easyToast from "@components/CustomToast";
+import { FaUsers } from "react-icons/fa";
 
 export default function Sidebar() {
   const location = usePathname();
@@ -24,11 +25,11 @@ export default function Sidebar() {
       link: "/dashboard/application",
       icon: <IoIosApps className="text-[22px]" />,
     },
-    // {
-    //   title: "Drafts",
-    //   link: "/dashboard/drafts",
-    //   icon: <MdScheduleSend className="text-[22px]" />,
-    // },
+    {
+      title: "Users",
+      link: "/dashboard/users",
+      icon: <FaUsers className="text-[22px]" />,
+    },
   ];
 
   return (
